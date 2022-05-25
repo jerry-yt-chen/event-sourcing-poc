@@ -2,6 +2,8 @@ PUB_NAME=event-publisher
 SUB_NAME=event-subscriber
 VERSION=latest
 
+default: test
+
 .PHONY: run
 run: build
 	docker-compose -f deployments/docker-compose.yaml up
@@ -19,3 +21,8 @@ down:
 di:
 	go install github.com/google/wire/cmd/wire@v0.5.0
 	wire gen ./internal/injector
+
+
+.PHONY: test
+test:
+	go test -race -short ./...
