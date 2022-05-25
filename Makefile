@@ -13,8 +13,8 @@ build:
 	docker build -t $(PUB_NAME):$(VERSION) -f ./build/$(PUB_NAME)/Dockerfile .
 	docker build -t $(SUB_NAME):$(VERSION) -f ./build/$(SUB_NAME)/Dockerfile .
 
-.PHONY: down
-down:
+.PHONY: stop
+stop:
 	docker-compose -f deployments/docker-compose.yaml down
 
 .PHONY: di
