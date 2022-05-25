@@ -8,6 +8,7 @@ import (
 	"github.com/ThreeDotsLabs/watermill/message"
 	"github.com/gin-gonic/gin"
 
+	"github.com/jerry-yt-chen/event-sourcing-poc/configs"
 	api "github.com/jerry-yt-chen/event-sourcing-poc/internal/framework/engine/gin/render"
 	"github.com/jerry-yt-chen/event-sourcing-poc/internal/receiver"
 )
@@ -34,7 +35,7 @@ func (im *impl) GetRouteInfos() []receiver.RouteInfo {
 func (im *impl) sendEvent(c *gin.Context) {
 	logger := watermill.NewStdLogger(true, false)
 	publisher, err := googlecloud.NewPublisher(googlecloud.PublisherConfig{
-		ProjectID: "test-project",
+		ProjectID: configs.C.Pub.Project,
 	}, logger)
 	if err != nil {
 		panic(err)
@@ -45,7 +46,7 @@ func (im *impl) sendEvent(c *gin.Context) {
 }
 
 func publishMessages(publisher message.Publisher, msg *message.Message) {
-	if err := publisher.Publish("example.topic", msg); err != nil {
+	if err := publisher.Publish(configs.C.Pub.Topic, msg); err != nil {
 		panic(err)
 	}
 }
