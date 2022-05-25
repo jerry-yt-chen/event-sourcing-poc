@@ -7,18 +7,21 @@ import (
 	"github.com/ThreeDotsLabs/watermill"
 	"github.com/ThreeDotsLabs/watermill-googlecloud/pkg/googlecloud"
 	"github.com/ThreeDotsLabs/watermill/message"
+
+	"github.com/jerry-yt-chen/event-sourcing-poc/configs"
 )
 
 func main() {
+	configs.InitConfigs()
 	logger := watermill.NewStdLogger(false, false)
 	subscriber, err := googlecloud.NewSubscriber(
 		googlecloud.SubscriberConfig{
 			// custom function to generate Subscription Name,
 			// there are also predefined TopicSubscriptionName and TopicSubscriptionNameWithSuffix available.
 			GenerateSubscriptionName: func(topic string) string {
-				return "test-sub_" + topic
+				return topic + "-sub"
 			},
-			ProjectID: "test-project",
+			ProjectID: configs.C.Sub.Project,
 		},
 		logger,
 	)
@@ -27,7 +30,7 @@ func main() {
 	}
 
 	// Subscribe will create the subscription. Only messages that are sent after the subscription is created may be received.
-	messages, err := subscriber.Subscribe(context.Background(), "example.topic")
+	messages, err := subscriber.Subscribe(context.Background(), configs.C.Sub.Topic)
 	if err != nil {
 		panic(err)
 	}
