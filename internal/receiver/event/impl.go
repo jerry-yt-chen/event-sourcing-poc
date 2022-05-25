@@ -3,6 +3,9 @@ package event
 import (
 	"net/http"
 
+	"github.com/ThreeDotsLabs/watermill"
+	"github.com/ThreeDotsLabs/watermill-googlecloud/pkg/googlecloud"
+	"github.com/ThreeDotsLabs/watermill/message"
 	"github.com/gin-gonic/gin"
 
 	api "github.com/jerry-yt-chen/event-sourcing-poc/internal/framework/engine/gin/render"
@@ -29,5 +32,20 @@ func (im *impl) GetRouteInfos() []receiver.RouteInfo {
 }
 
 func (im *impl) sendEvent(c *gin.Context) {
-	api.ResSuccess(c, http.StatusOK, struct{}{})
+	logger := watermill.NewStdLogger(true, false)
+	publisher, err := googlecloud.NewPublisher(googlecloud.PublisherConfig{
+		ProjectID: "test-project",
+	}, logger)
+	if err != nil {
+		panic(err)
+	}
+	msg := message.NewMessage(watermill.NewUUID(), []byte("Hello, world!"))
+	publishMessages(publisher, msg)
+	api.ResSuccess(c, http.StatusOK, publisher)
+}
+
+func publishMessages(publisher message.Publisher, msg *message.Message) {
+	if err := publisher.Publish("example.topic", msg); err != nil {
+		panic(err)
+	}
 }
