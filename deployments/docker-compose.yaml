@@ -8,10 +8,12 @@ services:
       dockerfile: ./build/event-publisher/Dockerfile
     volumes:
       - ../credentials:/app/credentials
+    depends_on:
+      - mongo
     ports:
       - "3000:3000"
     environment:
-      GOOGLE_APPLICATION_CREDENTIALS: "credentials/dev.json"
+      GOOGLE_APPLICATION_CREDENTIALS: "credentials/credential.json"
 
   subscriber:
     image: event-subscriber:latest
@@ -21,8 +23,10 @@ services:
       dockerfile: ../build/event-subscriber/Dockerfile
     volumes:
       - ../credentials:/app/credentials
+    depends_on:
+      - mongo
     environment:
-      GOOGLE_APPLICATION_CREDENTIALS: "credentials/dev.json"
+      GOOGLE_APPLICATION_CREDENTIALS: "credentials/credential.json"
 
   mongo:
     image: mongo:4.4.14
@@ -38,10 +42,20 @@ services:
     restart: always
     ports:
       - "8081:8081"
+    depends_on:
+      - mongo
     environment:
       ME_CONFIG_MONGODB_URL: mongodb://root:event-poc@mongo:27017/
 
-#  googlecloud:
-#    image: google/cloud-sdk:385.0.0
-#    entrypoint: gcloud --quiet beta emulators pubsub start --host-port=googlecloud:8085 --verbosity=debug --log-http
-#    restart: unless-stopped
+  scheduler:
+    image: event-scheduler:latest
+    restart: always
+    build:
+      context: ..
+      dockerfile: ./build/event-scheduler/Dockerfile
+    volumes:
+      - ../credentials:/app/credentials
+    depends_on:
+      - mongo
+    environment:
+      GOOGLE_APPLICATION_CREDENTIALS: "credentials/credential.json"
