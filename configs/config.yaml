@@ -24,5 +24,5 @@ mongo:
 
 fluentd:
   eventLog:
-    host: localhost
+    host: fluentd
     port: 24224
