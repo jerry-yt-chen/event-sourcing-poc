@@ -14,7 +14,7 @@ services:
     ports:
       - "3000:3000"
     environment:
-      GOOGLE_APPLICATION_CREDENTIALS: "credentials/credential.json"
+      GOOGLE_APPLICATION_CREDENTIALS: "/app/credentials/credential.json"
 
   subscriber:
     image: event-subscriber:latest
@@ -28,7 +28,7 @@ services:
     depends_on:
       - fluentd
     environment:
-      GOOGLE_APPLICATION_CREDENTIALS: "credentials/credential.json"
+      GOOGLE_APPLICATION_CREDENTIALS: "/app/credentials/credential.json"
 
 #  scheduler:
 #    image: event-scheduler:latest
@@ -42,7 +42,7 @@ services:
 #    depends_on:
 #      - fluentd
 #    environment:
-#      GOOGLE_APPLICATION_CREDENTIALS: "credentials/credential.json"
+#      GOOGLE_APPLICATION_CREDENTIALS: "/app/credentials/credential.json"
 
   fluentd:
     image: fluent/fluentd:v1.15.0-1.0
