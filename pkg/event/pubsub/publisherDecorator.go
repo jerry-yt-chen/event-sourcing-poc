@@ -1,32 +1,34 @@
 package event
 
 import (
-	"context"
 	"encoding/json"
+	"fmt"
 	"time"
 
 	"github.com/ThreeDotsLabs/watermill"
 	"github.com/sirupsen/logrus"
 
 	"github.com/jerry-yt-chen/event-sourcing-poc/pkg/event"
-	"github.com/jerry-yt-chen/event-sourcing-poc/pkg/mongo"
+	"github.com/jerry-yt-chen/event-sourcing-poc/pkg/fluentd"
 )
 
 type PublisherDecorator struct {
-	pub      Publisher
-	mongoSvc mongo.Service
-	topic    string
+	pub     Publisher
+	fluentd fluentd.Service
+	topic   string
+	tag     string
 }
 
-func NewPublisherDecorator(projectID, topic string, mongoSvc mongo.Service) Publisher {
+func NewPublisherDecorator(projectID, topic string, fluentd fluentd.Service) Publisher {
 	publisher, err := NewGcpPublisher(projectID, topic)
 	if err != nil {
 		panic(err)
 	}
 	return &PublisherDecorator{
-		pub:      publisher,
-		mongoSvc: mongoSvc,
-		topic:    topic,
+		pub:     publisher,
+		fluentd: fluentd,
+		topic:   topic,
+		tag:     fmt.Sprintf("event.%s.publisher", topic),
 	}
 }
 
@@ -42,7 +44,7 @@ func (d *PublisherDecorator) Send(payload interface{}, metadata event.Metadata) 
 	if err := d.pub.Send(payload, metadata); err != nil {
 		return err
 	}
-	go d.saveRecord(payload, metadata)
+	d.saveRecord(payload, metadata)
 	return nil
 }
 
@@ -56,10 +58,7 @@ func (d *PublisherDecorator) saveRecord(payload interface{}, metadata event.Meta
 		PublishTime: time.Now().Unix(),
 		CreatedTime: time.Now().Unix(),
 	}
-	coll := d.mongoSvc.Collection(record)
-	if result, err := coll.InsertOne(context.Background(), record); err != nil {
+	if err := d.fluentd.Post(d.tag, record); err != nil {
 		logrus.WithField("err", err).Error("Insert record failed")
-	} else {
-		logrus.Info("Success insert: ", result)
 	}
 }

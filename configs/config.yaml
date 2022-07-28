@@ -21,3 +21,8 @@ mongo:
   database: 17media
   poolSizeMultiplier: 1
   authDBName: admin
+
+fluentd:
+  eventLog:
+    host: fluentd
+    port: 24224

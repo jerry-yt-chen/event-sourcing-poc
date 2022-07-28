@@ -1,7 +1,7 @@
 package main
 
 import (
-	"context"
+	"fmt"
 	"time"
 
 	"github.com/ThreeDotsLabs/watermill/message"
@@ -10,13 +10,14 @@ import (
 	"github.com/jerry-yt-chen/event-sourcing-poc/configs"
 	"github.com/jerry-yt-chen/event-sourcing-poc/pkg/event"
 	pubsub "github.com/jerry-yt-chen/event-sourcing-poc/pkg/event/pubsub"
-	"github.com/jerry-yt-chen/event-sourcing-poc/pkg/mongo"
+	"github.com/jerry-yt-chen/event-sourcing-poc/pkg/fluentd"
 )
+
+var tag string
 
 func main() {
 	configs.InitConfigs()
-	// Mongo
-	mongoSvc, _ := mongo.Init(configs.C.Mongo)
+	fluentdSvc, _ := fluentd.New(configs.C.Fluentd.EventLog)
 	subscriber, _ := pubsub.NewGcpSubscriber(configs.C.Sub)
 
 	// Subscribe will create the subscription. Only messages that are sent after the subscription is created may be received.
@@ -25,10 +26,11 @@ func main() {
 		panic(err)
 	}
 
-	process(messages, mongoSvc)
+	tag = fmt.Sprintf("event.%s.subscriber", configs.C.Sub.Topic)
+	process(messages, fluentdSvc)
 }
 
-func process(messages <-chan *message.Message, mongoSvc mongo.Service) {
+func process(messages <-chan *message.Message, mongoSvc fluentd.Service) {
 	for msg := range messages {
 		logrus.Printf("received id: %s, event: %s, publishedTime: %v\n", msg.UUID, string(msg.Payload), msg.Metadata.Get("publishTime"))
 		receiveTime := time.Now()
@@ -39,7 +41,7 @@ func process(messages <-chan *message.Message, mongoSvc mongo.Service) {
 	}
 }
 
-func saveRecord(m *message.Message, mongoSvc mongo.Service, receiveTime time.Time) {
+func saveRecord(m *message.Message, fluentdSvc fluentd.Service, receiveTime time.Time) {
 	traceID := m.Metadata.Get("Cloud-Trace-Context")
 	record := event.ReceiveRecord{
 		Topic:       configs.C.Sub.Topic,
@@ -48,5 +50,7 @@ func saveRecord(m *message.Message, mongoSvc mongo.Service, receiveTime time.Tim
 		ReceiveTime: receiveTime.Unix(),
 		CreatedTime: time.Now().Unix(),
 	}
-	mongoSvc.Collection(new(event.ReceiveRecord)).InsertOne(context.Background(), record)
+	if err := fluentdSvc.Post(tag, record); err != nil {
+		logrus.WithField("err", err).Error("Post failed")
+	}
 }

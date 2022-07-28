@@ -14,7 +14,7 @@ import (
 
 	"github.com/jerry-yt-chen/event-sourcing-poc/configs"
 	"github.com/jerry-yt-chen/event-sourcing-poc/pkg/event"
-	"github.com/jerry-yt-chen/event-sourcing-poc/pkg/mongo"
+	"github.com/jerry-yt-chen/event-sourcing-poc/pkg/fluentd"
 )
 
 const (
@@ -30,7 +30,7 @@ func main() {
 	var subOffset int64
 
 	// Mongo
-	mongoSvc, _ := mongo.Init(configs.C.Mongo)
+	mongoSvc, _ := fluentd.Init(configs.C.Mongo)
 	s := gocron.NewScheduler(time.UTC)
 	s.Every(interval).Second().Do(func() {
 		topicSubscriberCountMap := make(map[string]int)

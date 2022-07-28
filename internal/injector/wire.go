@@ -20,7 +20,7 @@ func BuildInjector() (*Injector, func(), error) {
 		api.ProvideReceiverList,
 
 		// persistence
-		persistence.InitMongo,
+		persistence.InitFluentd,
 
 		// lib
 		lib.InitEventPublisher,

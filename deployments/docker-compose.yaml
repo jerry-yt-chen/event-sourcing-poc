@@ -8,12 +8,13 @@ services:
       dockerfile: ./build/event-publisher/Dockerfile
     volumes:
       - ../credentials:/app/credentials
+      - ../configs:/app/configs
     depends_on:
-      - mongo
+      - fluentd
     ports:
       - "3000:3000"
     environment:
-      GOOGLE_APPLICATION_CREDENTIALS: "credentials/credential.json"
+      GOOGLE_APPLICATION_CREDENTIALS: "/app/credentials/credential.json"
 
   subscriber:
     image: event-subscriber:latest
@@ -23,39 +24,30 @@ services:
       dockerfile: ./build/event-subscriber/Dockerfile
     volumes:
       - ../credentials:/app/credentials
+      - ../configs:/app/configs
     depends_on:
-      - mongo
+      - fluentd
     environment:
-      GOOGLE_APPLICATION_CREDENTIALS: "credentials/credential.json"
+      GOOGLE_APPLICATION_CREDENTIALS: "/app/credentials/credential.json"
 
-  mongo:
-    image: mongo:4.4.14
-    restart: always
+#  scheduler:
+#    image: event-scheduler:latest
+#    restart: always
+#    build:
+#      context: ..
+#      dockerfile: ./build/event-scheduler/Dockerfile
+#    volumes:
+#      - ../credentials:/app/credentials
+#      - ../configs:/app/configs
+#    depends_on:
+#      - fluentd
+#    environment:
+#      GOOGLE_APPLICATION_CREDENTIALS: "/app/credentials/credential.json"
+
+  fluentd:
+    image: fluent/fluentd:v1.15.0-1.0
     volumes:
-      - ../scripts/mongo/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
-    environment:
-      MONGO_INITDB_ROOT_USERNAME: root
-      MONGO_INITDB_ROOT_PASSWORD: event-poc
-
-  mongo-express:
-    image: mongo-express
-    restart: always
+      - ./fluentd:/fluentd/etc
     ports:
-      - "8081:8081"
-    depends_on:
-      - mongo
-    environment:
-      ME_CONFIG_MONGODB_URL: mongodb://root:event-poc@mongo:27017/
-
-  scheduler:
-    image: event-scheduler:latest
-    restart: always
-    build:
-      context: ..
-      dockerfile: ./build/event-scheduler/Dockerfile
-    volumes:
-      - ../credentials:/app/credentials
-    depends_on:
-      - mongo
-    environment:
-      GOOGLE_APPLICATION_CREDENTIALS: "credentials/credential.json"
+      - "24224:24224"
+      - "24224:24224/udp"

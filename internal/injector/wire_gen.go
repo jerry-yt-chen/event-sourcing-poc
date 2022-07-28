@@ -17,7 +17,7 @@ import (
 // Injectors from wire.go:
 
 func BuildInjector() (*Injector, func(), error) {
-	service := persistence.InitMongo()
+	service := persistence.InitFluentd()
 	publisher := lib.InitEventPublisher(service)
 	receiver := user.ProvideReceiver(publisher)
 	v := api.ProvideReceiverList(receiver)
